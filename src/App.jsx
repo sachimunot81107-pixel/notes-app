@@ -16,6 +16,10 @@ function App() {
   const [newTitle, setNewTitle] = useState('')
   const [newUnit, setNewUnit] = useState('')
   const [newLink, setNewLink] = useState('')
+    // list of note ids this phone has already upvoted; starts from what the browser saved
+  const [votedIds, setVotedIds] = useState(
+    () => JSON.parse(localStorage.getItem('votedIds') || '[]')
+  )
 
   // runs once when the page opens (because of the empty [] at the end)
   async function loadNotes() {
@@ -61,6 +65,29 @@ function App() {
     loadNotes()
   }
 
+    // runs when someone taps "This helped"
+  async function upvote(id) {
+    // already voted on this note? do nothing
+    if (votedIds.includes(id)) return
+
+    // ask the database to run our function for this note
+    const { error } = await supabase.rpc('increment_upvotes', { note_id: id })
+
+    // if it failed, show the error and stop
+    if (error) {
+      console.log(error)
+      return
+    }
+
+    // remember this vote in the browser (add the id to the list)
+    const updated = [...votedIds, id]
+    setVotedIds(updated)
+    localStorage.setItem('votedIds', JSON.stringify(updated))
+
+    // reload the list so the new count and the new order appear
+    loadNotes()
+  }
+
   // Make the chip list: 'All' + each different subject (Set removes duplicates)
   const subjects = ['All', ...new Set(notes.map((note) => note.subject))]
 
@@ -98,7 +125,12 @@ function App() {
           <h3>{note.title}</h3>
           <p>{note.subject} {note.unit && `• ${note.unit}`}</p>
           <a href={note.link} target="_blank" rel="noreferrer">Open note</a>
-          <p>👍 {note.upvotes}</p>
+                    <button
+            className={votedIds.includes(note.id) ? 'vote voted' : 'vote'}
+            onClick={() => upvote(note.id)}
+          >
+            👍 {note.upvotes} {votedIds.includes(note.id) ? 'Helped' : 'This helped'}
+          </button>
         </div>
       )
 

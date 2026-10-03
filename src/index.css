@@ -82,3 +82,19 @@ body {
 .sheet-buttons button { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 16px; }
 .save { background: #2563eb; color: white; }
 .cancel { background: #e5e7eb; }
+
+.vote {
+  width: 100%;              /* full-width button = easy to hit with a thumb */
+  margin-top: 10px;
+  padding: 14px;
+  border: 2px solid #2563eb;
+  border-radius: 10px;
+  background: white;
+  color: #2563eb;
+  font-size: 16px;
+}
+
+.vote.voted {
+  background: #2563eb;      /* filled blue once you have voted */
+  color: white;
+}
