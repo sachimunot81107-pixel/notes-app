@@ -38,7 +38,7 @@ I showed the app to two people who had never seen it, and did not explain anythi
 | Tester | Where they got stuck | What I changed |
 |---|---|---|
 | Tester 1 | There was no way to delete a note, so a wrong or test note stayed there forever | Added a "Delete my note" button, so people can remove the notes they added |
-| Tester 2 | Did not get stuck anywhere | Nothing needed to change |
+| Tester 2 | The "Open note" link text looked strange and unclear, and they wanted to be able to comment on notes | Turned the link into a clear "See notes" button and added comments on notes |
 
 ## 5. AI
 
@@ -50,6 +50,7 @@ I showed the app to two people who had never seen it, and did not explain anythi
 - **Voting is limited per browser, not per person.** There is no login (to keep it one-thumb), so someone who clears their browser data could vote again.
 - **Delete works only on the phone that added the note.** If browser data is cleared, the secret code is lost and the note cannot be deleted by the student.
 - The subject chips at the top need a stretch to reach and scroll sideways, which is not ideal for one thumb.
+- Comments are anonymous, with no editing, deleting or moderation yet.
 - No search box yet.
 - No moderation: anyone can add any link or PDF (PDFs are limited to 10 MB).
 - Notes do not have separate pages or shareable links yet.
@@ -75,5 +76,6 @@ VITE_SUPABASE_PUBLISHABLE_KEY=
 Your own Supabase project needs:
 
 - a table `notes` (id, subject, unit, title, link, upvotes, created_at, delete_token) with Row Level Security turned on
+- a table `comments` (id, note_id, body, created_at) with Row Level Security turned on
 - a public storage bucket `notes-pdfs` (PDF files only, 10 MB limit)
 - two database functions: `increment_upvotes` and `delete_note`
