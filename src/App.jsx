@@ -11,21 +11,55 @@ function App() {
   const [selectedSubject, setSelectedSubject] = useState('All')
   // true while we are waiting for the database to reply
   const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [newSubject, setNewSubject] = useState('')
+  const [newTitle, setNewTitle] = useState('')
+  const [newUnit, setNewUnit] = useState('')
+  const [newLink, setNewLink] = useState('')
 
   // runs once when the page opens (because of the empty [] at the end)
+  async function loadNotes() {
+    const { data, error } = await supabase
+      .from('notes')
+      .select('*')
+      .order('upvotes', { ascending: false })
+    if (error) console.log(error)
+    else setNotes(data)
+    setLoading(false)
+  }
+
+  // run it once when the page opens
   useEffect(() => {
-    // async lets us "await" (wait for) the database reply
-    async function loadNotes() {
-      const { data, error } = await supabase
-        .from('notes')                              // look in the "notes" table
-        .select('*')                                // take all columns
-        .order('upvotes', { ascending: true })     // most helpful notes first
-      if (error) console.log(error)                 // show the error in the console
-      else setNotes(data)                           // save rows -> screen updates
-      setLoading(false)                             // we are done waiting
-    }
-    loadNotes() // call the function we just defined
+    loadNotes()
   }, [])
+
+  // runs when the user submits the form
+  async function addNote(e) {
+    e.preventDefault() // stop the browser from refreshing the page
+
+    // send one new row to the "notes" table in Supabase
+    const { error } = await supabase.from('notes').insert({
+      subject: newSubject.trim(),      // trim() removes extra spaces
+      title: newTitle.trim(),
+      unit: newUnit.trim() || null,    // if unit is empty, store nothing
+      link: newLink.trim(),
+    })
+
+    // if the database refused, tell the user and stop here
+    if (error) {
+      console.log(error)
+      alert('Could not add the note. Please try again.')
+      return
+    }
+
+    // success: clear the boxes, close the panel, reload the list
+    setNewSubject('')
+    setNewTitle('')
+    setNewUnit('')
+    setNewLink('')
+    setShowForm(false)
+    loadNotes()
+  }
 
   // Make the chip list: 'All' + each different subject (Set removes duplicates)
   const subjects = ['All', ...new Set(notes.map((note) => note.subject))]
@@ -35,6 +69,7 @@ function App() {
     selectedSubject === 'All'
       ? notes
       : notes.filter((note) => note.subject === selectedSubject)
+
 
   return (
     <div className="app">
@@ -65,7 +100,65 @@ function App() {
           <a href={note.link} target="_blank" rel="noreferrer">Open note</a>
           <p>👍 {note.upvotes}</p>
         </div>
-      ))}
+      )
+
+      )}
+      {/* floating button, always at the bottom right */}
+      <button className="fab" onClick={() => setShowForm(true)}>
+        + Add note
+      </button>
+
+      {/* the form panel, shown only when showForm is true */}
+      {showForm && (
+        <div className="sheet">
+          <form onSubmit={addNote}>
+            <h2>Add a note</h2>
+
+            {/* typing here suggests existing subjects from the list below */}
+            <input
+              list="subject-options"
+              placeholder="Subject (e.g. Maths)"
+              value={newSubject}
+              onChange={(e) => setNewSubject(e.target.value)}
+              required
+            />
+            <datalist id="subject-options">
+              {subjects
+                .filter((s) => s !== 'All')
+                .map((s) => (
+                  <option key={s} value={s} />
+                ))}
+            </datalist>
+
+            <input
+              placeholder="Title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              required
+            />
+            <input
+              placeholder="Unit (optional)"
+              value={newUnit}
+              onChange={(e) => setNewUnit(e.target.value)}
+            />
+            <input
+              type="url"
+              placeholder="Link (Drive / PDF)"
+              value={newLink}
+              onChange={(e) => setNewLink(e.target.value)}
+              required
+            />
+
+            <div className="sheet-buttons">
+              <button type="button" className="cancel" onClick={() => setShowForm(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="save">Save</button>
+            </div>
+          </form>
+        </div>
+      )}
+
     </div>
   )
 }

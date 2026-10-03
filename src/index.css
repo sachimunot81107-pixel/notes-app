@@ -40,3 +40,45 @@ body {
   background: #2563eb;  /* blue when selected */
   color: white;
 }
+
+.fab {
+  position: fixed;       /* stays in place even when the page scrolls */
+  bottom: 20px;          /* near the bottom edge, where the thumb rests */
+  right: 20px;
+  padding: 16px 22px;    /* big tap area */
+  border: none;
+  border-radius: 999px;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.sheet {
+  position: fixed;       /* panel stuck to the bottom of the screen */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  padding: 16px;
+  border-radius: 16px 16px 0 0;                 /* rounded top corners only */
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.15);  /* shadow pointing upward */
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.sheet input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box; /* include padding in the width so it doesn't overflow */
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+.sheet-buttons { display: flex; gap: 10px; }
+.sheet-buttons button { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 16px; }
+.save { background: #2563eb; color: white; }
+.cancel { background: #e5e7eb; }
