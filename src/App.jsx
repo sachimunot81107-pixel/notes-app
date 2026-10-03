@@ -24,6 +24,11 @@ function App() {
   const [newFile, setNewFile] = useState(null)
   // true while the file is uploading, so we can disable the Save button
   const [uploading, setUploading] = useState(false)
+    // secret codes for the notes this phone added, like { 12: 'abc-123' }
+  const [myTokens, setMyTokens] = useState(
+    () => JSON.parse(localStorage.getItem('myTokens') || '{}')
+  )
+
 
   // runs once when the page opens (because of the empty [] at the end)
   async function loadNotes() {
@@ -75,18 +80,31 @@ function App() {
     }
 
     // save the note row, using finalLink (PDF link or typed link)
-    const { error } = await supabase.from('notes').insert({
-      subject: newSubject.trim(),
-      title: newTitle.trim(),
-      unit: newUnit.trim() || null,
-      link: finalLink,
-    })
+        // make a random secret code for this note
+    const token = crypto.randomUUID()
+
+    // save the note along with its code; .select('id').single() gives back the new note's id
+    const { data: created, error } = await supabase
+      .from('notes')
+      .insert({
+        subject: newSubject.trim(),
+        title: newTitle.trim(),
+        unit: newUnit.trim() || null,
+        link: finalLink,
+        delete_token: token,
+      })
+      .select('id')
+      .single()
 
     if (error) {
       console.log(error)
       alert('Could not add the note. Please try again.')
       return
     }
+        // remember the code on this phone, matched to the note's id
+    const updatedTokens = { ...myTokens, [created.id]: token }
+    setMyTokens(updatedTokens)
+    localStorage.setItem('myTokens', JSON.stringify(updatedTokens))
 
     // success: clear everything, close the panel, reload the list
     setNewSubject('')
@@ -95,6 +113,31 @@ function App() {
     setNewLink('')
     setNewFile(null)
     setShowForm(false)
+    loadNotes()
+  }
+
+    // runs when someone taps Delete
+  async function deleteNote(id) {
+    // ask first, so an accidental tap doesn't delete a note
+    if (!window.confirm('Delete this note?')) return
+
+    // ask the database to delete it, sending this phone's secret code
+    const { data: ok, error } = await supabase.rpc('delete_note', {
+      note_id: id,
+      token: myTokens[id],
+    })
+
+    // false or an error means the code didn't match or something failed
+    if (error || !ok) {
+      alert('Could not delete this note.')
+      return
+    }
+
+    // forget the code, then reload the list
+    const rest = { ...myTokens }
+    delete rest[id]
+    setMyTokens(rest)
+    localStorage.setItem('myTokens', JSON.stringify(rest))
     loadNotes()
   }
 
@@ -164,6 +207,13 @@ function App() {
           >
             👍 {note.upvotes} {votedIds.includes(note.id) ? 'Helped' : 'This helped'}
           </button>
+
+          {/* NEW: the delete button goes here, after the vote button */}
+          {myTokens[note.id] && (
+            <button className="delete" onClick={() => deleteNote(note.id)}>
+              Delete my note
+            </button>
+          )}
         </div>
       )
 

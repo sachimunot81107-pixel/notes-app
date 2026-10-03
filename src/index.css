@@ -98,3 +98,14 @@ body {
   background: #2563eb;      /* filled blue once you have voted */
   color: white;
 }
+
+.delete {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #fee2e2;   /* light red */
+  color: #b91c1c;        /* dark red text */
+  font-size: 15px;
+}
