@@ -34,7 +34,7 @@ function App() {
   async function loadNotes() {
     const { data, error } = await supabase
       .from('notes')
-      .select('*')
+      .select('id, subject, unit, title, link, upvotes, created_at')
       .order('upvotes', { ascending: false })
     if (error) console.log(error)
     else setNotes(data)
