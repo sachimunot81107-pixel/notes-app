@@ -20,6 +20,10 @@ function App() {
   const [votedIds, setVotedIds] = useState(
     () => JSON.parse(localStorage.getItem('votedIds') || '[]')
   )
+    // the PDF the user picked (null = nothing picked)
+  const [newFile, setNewFile] = useState(null)
+  // true while the file is uploading, so we can disable the Save button
+  const [uploading, setUploading] = useState(false)
 
   // runs once when the page opens (because of the empty [] at the end)
   async function loadNotes() {
@@ -38,29 +42,58 @@ function App() {
   }, [])
 
   // runs when the user submits the form
-  async function addNote(e) {
-    e.preventDefault() // stop the browser from refreshing the page
+    async function addNote(e) {
+    e.preventDefault() // stop the page from refreshing
 
-    // send one new row to the "notes" table in Supabase
+    // start with the link typed by the user (may be empty if they picked a PDF)
+    let finalLink = newLink.trim()
+
+    // if a PDF was chosen, upload it first
+    if (newFile) {
+      setUploading(true) // show "Uploading..." on the button
+
+      // make a safe, unique file name: time + original name without odd characters
+      const fileName = `${Date.now()}-${newFile.name.replace(/[^a-zA-Z0-9.]/g, '_')}`
+
+      // send the file to the "notes-pdfs" bucket in Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('notes-pdfs')
+        .upload(fileName, newFile)
+
+      // if the upload failed, tell the user and stop
+      if (uploadError) {
+        console.log(uploadError)
+        alert('Could not upload the PDF. Is it under 10 MB?')
+        setUploading(false)
+        return
+      }
+
+      // ask Supabase for the public link of the file we just uploaded
+      const { data } = supabase.storage.from('notes-pdfs').getPublicUrl(fileName)
+      finalLink = data.publicUrl // this link is what we save in the table
+      setUploading(false)
+    }
+
+    // save the note row, using finalLink (PDF link or typed link)
     const { error } = await supabase.from('notes').insert({
-      subject: newSubject.trim(),      // trim() removes extra spaces
+      subject: newSubject.trim(),
       title: newTitle.trim(),
-      unit: newUnit.trim() || null,    // if unit is empty, store nothing
-      link: newLink.trim(),
+      unit: newUnit.trim() || null,
+      link: finalLink,
     })
 
-    // if the database refused, tell the user and stop here
     if (error) {
       console.log(error)
       alert('Could not add the note. Please try again.')
       return
     }
 
-    // success: clear the boxes, close the panel, reload the list
+    // success: clear everything, close the panel, reload the list
     setNewSubject('')
     setNewTitle('')
     setNewUnit('')
     setNewLink('')
+    setNewFile(null)
     setShowForm(false)
     loadNotes()
   }
@@ -173,19 +206,28 @@ function App() {
               value={newUnit}
               onChange={(e) => setNewUnit(e.target.value)}
             />
-            <input
+                        <input
               type="url"
-              placeholder="Link (Drive / PDF)"
+              placeholder="Paste a link (or choose a PDF below)"
               value={newLink}
               onChange={(e) => setNewLink(e.target.value)}
-              required
+              required={!newFile}
+            />
+
+            {/* file picker: only PDFs; takes the first chosen file */}
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setNewFile(e.target.files[0] || null)}
             />
 
             <div className="sheet-buttons">
               <button type="button" className="cancel" onClick={() => setShowForm(false)}>
                 Cancel
               </button>
-              <button type="submit" className="save">Save</button>
+                <button type="submit" className="save" disabled={uploading}>
+                {uploading ? 'Uploading...' : 'Save'}
+              </button>
             </div>
           </form>
         </div>
