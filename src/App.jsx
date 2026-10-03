@@ -28,6 +28,12 @@ function App() {
   const [myTokens, setMyTokens] = useState(
     () => JSON.parse(localStorage.getItem('myTokens') || '{}')
   )
+    // all comments from the database
+  const [comments, setComments] = useState([])
+  // id of the note whose comments are open (null = none open)
+  const [openComments, setOpenComments] = useState(null)
+  // what the user is typing in the comment box
+  const [commentText, setCommentText] = useState('')
 
 
   // runs once when the page opens (because of the empty [] at the end)
@@ -44,6 +50,7 @@ function App() {
   // run it once when the page opens
   useEffect(() => {
     loadNotes()
+    loadComments()   // NEW
   }, [])
 
   // runs when the user submits the form
@@ -141,6 +148,37 @@ function App() {
     loadNotes()
   }
 
+    // load every comment, oldest first
+  async function loadComments() {
+    const { data, error } = await supabase
+      .from('comments')
+      .select('id, note_id, body, created_at')
+      .order('created_at', { ascending: true })
+    if (error) console.log(error)
+    else setComments(data)
+  }
+
+  // save a new comment for one note
+  async function addComment(noteId) {
+    const text = commentText.trim()          // remove extra spaces
+    if (!text) return                        // empty comment: do nothing
+
+    const { error } = await supabase
+      .from('comments')
+      .insert({ note_id: noteId, body: text })
+
+    if (error) {
+      console.log(error)
+      alert('Could not add the comment.')
+      return
+    }
+    setCommentText('')                       // clear the box
+    loadComments()                           // reload so the new comment shows
+  }
+
+  // helper: the comments of one note
+  const commentsFor = (id) => comments.filter((c) => c.note_id === id)
+
     // runs when someone taps "This helped"
   async function upvote(id) {
     // already voted on this note? do nothing
@@ -200,7 +238,7 @@ function App() {
         <div className="card" key={note.id}>
           <h3>{note.title}</h3>
           <p>{note.subject} {note.unit && `• ${note.unit}`}</p>
-          <a href={note.link} target="_blank" rel="noreferrer">Open note</a>
+          <a className="open-btn" href={note.link} target="_blank" rel="noreferrer">📄 See notes</a>
                     <button
             className={votedIds.includes(note.id) ? 'vote voted' : 'vote'}
             onClick={() => upvote(note.id)}
@@ -213,6 +251,36 @@ function App() {
             <button className="delete" onClick={() => deleteNote(note.id)}>
               Delete my note
             </button>
+
+          )}
+
+                    {/* tap to open or close the comments of this note */}
+          <button
+            className="comment-toggle"
+            onClick={() => {
+              setOpenComments(openComments === note.id ? null : note.id)
+              setCommentText('')
+            }}
+          >
+            💬 Comments ({commentsFor(note.id).length})
+          </button>
+
+          {/* shown only for the note whose comments are open */}
+          {openComments === note.id && (
+            <div className="comments">
+              {commentsFor(note.id).map((c) => (
+                <p className="comment" key={c.id}>{c.body}</p>
+              ))}
+              <div className="comment-form">
+                <input
+                  placeholder="Write a comment..."
+                  value={commentText}
+                  maxLength={300}
+                  onChange={(e) => setCommentText(e.target.value)}
+                />
+                <button onClick={() => addComment(note.id)}>Send</button>
+              </div>
+            </div>
           )}
         </div>
       )
