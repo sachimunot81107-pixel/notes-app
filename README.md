@@ -2,10 +2,8 @@
 
 A small web app where students find the **one useful note** for each subject, without digging through WhatsApp chats and Google Classroom.
 
-- **Live app:** [paste your Vercel link here]
+- **Live app:** https://notes-app-p6tv.vercel.app/
 - **Built with:** React (Vite), Supabase (database + file storage), Vercel (hosting)
-
-> Anything marked **[FILL IN]** must be written by you, in your own words, from what really happened. Delete this note before you commit.
 
 ---
 
@@ -14,7 +12,7 @@ A small web app where students find the **one useful note** for each subject, wi
 - My classmates and I get notes in many places: WhatsApp groups, and faculty uploads on Google Classroom.
 - The notes pile up in chats and nobody can tell which note is the important one. Before exams we scroll through hundreds of messages to find it.
 - **Who it annoys:** students in my class (including me).
-- **How I know:** this is how we share notes ourselves. **[FILL IN: one real example, e.g. "before the mid-sem I spent ... looking for ..."]**
+- **How I know:** this is exactly how my classmates and I share notes. We get them in WhatsApp groups and on Google Classroom, and it is hard to find the one note that is really important.
 
 ## 2. My constraint: #1 "One thumb"
 
@@ -39,13 +37,13 @@ I showed the app to two people who had never seen it, and did not explain anythi
 
 | Tester | Where they got stuck | What I changed |
 |---|---|---|
-| **[FILL IN: Tester 1]** | **[FILL IN]** | **[FILL IN]** |
-| **[FILL IN: Tester 2]** | **[FILL IN]** | **[FILL IN]** |
+| Tester 1 | There was no way to delete a note, so a wrong or test note stayed there forever | Added a "Delete my note" button, so people can remove the notes they added |
+| Tester 2 | Did not get stuck anywhere | Nothing needed to change |
 
 ## 5. AI
 
 - **What I used AI for:** guidance on how to structure the app, explanations of React and Supabase ideas, and help writing the database functions and security rules. I typed and tested the code myself and made sure I understood each part.
-- **One thing it got wrong that I had to fix:** **[FILL IN with what really happened to you. A true example from this build: after the database was changed to hide the secret delete code, the notes list stopped loading because the code still asked for every column. I found it in the browser console and fixed it by listing only the public columns in the query.]**
+- **One thing it got wrong that I had to fix:** after I made the database hide the secret delete code from the public, the notes list stopped loading. The query still asked for every column, and the database refused it. I found the permission error in the browser console and fixed it by listing only the public columns in the query.
 
 ## 6. Not done / half-working
 
